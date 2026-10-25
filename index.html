@@ -157,6 +157,13 @@
     }
     @media(max-height:700px) {.choices{height:142px;margin-top:12px;}}
 
+
+    /* Impossible-to-catch No: starts beside Yes, teleports beyond card bounds */
+    #noBtn {pointer-events:none!important;user-select:none!important;-webkit-user-select:none!important;touch-action:none!important;}
+    #noBtn.no-escaped {position:fixed!important;z-index:9999!important;transition:none!important;pointer-events:none!important;box-shadow:0 14px 34px rgba(163,90,136,.23);}
+    #noBtn.no-escaped.dodge {transform:rotate(var(--wiggle,0deg));}
+    @media(prefers-reduced-motion:reduce) {#noBtn.no-escaped{transition:none!important;}}
+
   </style>
 </head>
 <body>
@@ -217,86 +224,143 @@
       var againBtn = document.getElementById("againBtn");
       var confetti = document.getElementById("confetti");
       var attempts = 0;
-      var lastMove = 0;
       var returnTimer = null;
+      var revealFrame = null;
       var mousePoint = null;
-      var homeTop = 20;
-      function restoreNo(){
-        noBtn.style.left = window.innerWidth < 600 ? "54%" : "55%";
-        noBtn.style.top = homeTop+"px";
-        noBtn.classList.remove("dodge");
+      var escaped = false;
+      var hints = [
+        "Nice try, sweetheart 😉",
+        "Too slow! 💗",
+        "Nope, not catching me 🙈",
+        "This button has wings ✨",
+        "You know which one to choose ♡",
+        "The pink one is waiting 💕"
+      ];
+      // The decorative "No" has no hit target at all. On attempted interaction
+      // it teleports into a separate body-level layer, outside the glass card.
+      // That fixes the old bug where the card clipped its escape positions.
+      function homeCenter() {
+        var r=area.getBoundingClientRect();
+        return { x:r.left+r.width*(innerWidth<600?.54:.55)+noBtn.offsetWidth/2,
+                 y:r.top+20+noBtn.offsetHeight/2 };
       }
-      function scheduleReturn(delay){
+      function distanceToNo(x,y) {
+        var r=noBtn.getBoundingClientRect();
+        return Math.hypot(Math.max(r.left-x,0,x-r.right),
+                          Math.max(r.top-y,0,y-r.bottom));
+      }
+      function clearReturn() {
         clearTimeout(returnTimer);
+        returnTimer=null;
+      }
+      function restoreNo() {
+        clearReturn();
+        if(revealFrame!==null) cancelAnimationFrame(revealFrame);
+        revealFrame=null;
+        noBtn.style.visibility="hidden";
+        if(noBtn.parentNode!==area)area.insertBefore(noBtn,tease);
+        noBtn.classList.remove("no-escaped","dodge");
+        noBtn.style.left="";
+        noBtn.style.top="";
+        noBtn.style.width="";
+        noBtn.style.setProperty("--wiggle","0deg");
+        escaped=false;
+        revealFrame=requestAnimationFrame(function(){
+          noBtn.style.visibility="visible";
+          revealFrame=null;
+        });
+      }
+      function scheduleReturn(ms) {
+        clearReturn();
         returnTimer=setTimeout(function(){
-          // Never snap under the user's pointer; return as soon as the area is clear.
-          var r=area.getBoundingClientRect();
-          var hx=r.left + r.width*(window.innerWidth < 600 ? .54 : .55) + noBtn.offsetWidth/2;
-          var hy=r.top+homeTop+noBtn.offsetHeight/2;
-          if(mousePoint && Math.hypot(mousePoint.x-hx,mousePoint.y-hy)<115){
-            scheduleReturn(550);
-            return;
+          if(question.classList.contains("hidden"))return;
+          var h=homeCenter();
+          if(mousePoint && Math.hypot(mousePoint.x-h.x,mousePoint.y-h.y)<175) {
+            scheduleReturn(650);return;
           }
           restoreNo();
-        },delay);
+        },ms);
       }
-      var hints = ["Nice try, sweetheart 😉", "Nope! Too quick for you 💕", "That button is shy 🙈", "Love wins this round ♡", "Almost... but not quite ✨", "The pink one is waiting 💗"];
-      // No is a visual joke, not an actionable button. Because it cannot receive
-      // pointer events or keyboard focus, there is no race where it can be clicked.
-      // Its position reacts to proximity on desktop and attempted taps on phones.
-      function evade(evt, immediate) {
-        var now = performance.now();
-        if(!immediate && now - lastMove < 85)return;
-        lastMove = now; attempts++;
-        var ar = area.getBoundingClientRect();
-        var nr = noBtn.getBoundingClientRect();
-        var yr = yesBtn.getBoundingClientRect();
-        var bw = nr.width, bh = nr.height;
-        var maxX = Math.max(6, ar.width-bw-6), maxY = Math.max(8,ar.height-bh-45);
-        var px = evt && typeof evt.clientX === "number" ? evt.clientX-ar.left : ar.width/2;
-        var py = evt && typeof evt.clientY === "number" ? evt.clientY-ar.top : ar.height/2;
-        var oldX = nr.left-ar.left, oldY = nr.top-ar.top;
-        var yesX = yr.left-ar.left, yesY = yr.top-ar.top;
-        var best = {x:Math.min(maxX,oldX),y:Math.min(maxY,oldY),score:-Infinity};
-        // Pick an unobstructed position maximally away from the actual finger/cursor.
-        for(var i=0;i<85;i++){
-          var x=6+Math.random()*(maxX-6), y=8+Math.random()*(maxY-8);
-          var hitsYes=x<yesX+yr.width+8 && x+bw>yesX-8 && y<yesY+yr.height+8 && y+bh>yesY-8;
-          if(hitsYes)continue;
-          var pointerDist=Math.hypot((x+bw/2)-px,(y+bh/2)-py);
-          var travelDist=Math.hypot(x-oldX,y-oldY);
-          var score=pointerDist*1.4 + Math.min(travelDist,180)*.6 + Math.random()*12;
-          if(score>best.score)best={x:x,y:y,score:score};
+      function evade(point) {
+        if(question.classList.contains("hidden"))return;
+        clearReturn();
+        if(revealFrame!==null)cancelAnimationFrame(revealFrame);
+        revealFrame=null;
+        attempts++;
+        var bounds=noBtn.getBoundingClientRect();
+        var bw=bounds.width, bh=bounds.height;
+        var cx=point && Number.isFinite(point.clientX)?point.clientX:innerWidth/2;
+        var cy=point && Number.isFinite(point.clientY)?point.clientY:innerHeight/2;
+        var prevX=bounds.left+bw/2, prevY=bounds.top+bh/2;
+        // Use the visual viewport, with safe edges on smaller phone screens.
+        var vv=window.visualViewport;
+        var leftEdge=vv?vv.offsetLeft:0, topEdge=vv?vv.offsetTop:0;
+        var vw=vv?vv.width:innerWidth, vh=vv?vv.height:innerHeight;
+        var margin=12;
+        var minX=leftEdge+margin, maxX=Math.max(minX,leftEdge+vw-bw-margin);
+        var minY=topEdge+margin, maxY=Math.max(minY,topEdge+vh-bh-margin);
+        var yr=yesBtn.getBoundingClientRect();
+        var best=null;
+        // Candidate points across the viewport, not the tiny button row.
+        for(var i=0;i<72;i++){
+          var x=minX+Math.random()*Math.max(0,maxX-minX);
+          var y=minY+Math.random()*Math.max(0,maxY-minY);
+          var overlapsYes=x<yr.right+15 && x+bw>yr.left-15 && y<yr.bottom+15 && y+bh>yr.top-15;
+          if(overlapsYes)continue;
+          var dist=Math.hypot(x+bw/2-cx,y+bh/2-cy);
+          var travel=Math.hypot(x+bw/2-prevX,y+bh/2-prevY);
+          // Prefer large, obvious jumps and prioritize getting far away from a finger.
+          var score=dist*3+Math.min(travel,400)*.6+Math.random()*18;
+          if(!best||score>best.score)best={x:x,y:y,score:score};
+        }
+        if(!best)best={x:minX,y:minY};
+        // Hide immediately, move without interpolation, then reveal next frame.
+        noBtn.style.visibility="hidden";
+        if(!escaped) {
+          noBtn.style.width=bw+"px";
+          document.body.appendChild(noBtn);
+          noBtn.classList.add("no-escaped");
+          escaped=true;
         }
         noBtn.style.left=best.x.toFixed(1)+"px";
         noBtn.style.top=best.y.toFixed(1)+"px";
-        noBtn.style.setProperty("--wiggle",((attempts%2)?-1:1)*(3+Math.random()*7)+"deg");
+        noBtn.style.setProperty("--wiggle",(attempts%2?-7:7)+"deg");
         noBtn.classList.add("dodge");
         tease.textContent=hints[(attempts-1)%hints.length];
-        scheduleReturn(1150);
+        revealFrame=requestAnimationFrame(function(){
+          noBtn.style.visibility="visible";
+          revealFrame=null;
+        });
+        scheduleReturn(3100);
       }
-      function distanceToNo(x,y){
-        var r=noBtn.getBoundingClientRect();
-        return Math.hypot(Math.max(r.left-x,0,x-r.right),Math.max(r.top-y,0,y-r.bottom));
-      }
-      area.addEventListener("pointermove",function(e){
-        if(e.pointerType==="touch")return;
+      // Listen on the entire page. Moving outside the original button zone
+      // no longer stops the chase-detection. No is never an interactive element.
+      window.addEventListener("pointermove",function(e){
+        if(e.pointerType==="touch"||question.classList.contains("hidden"))return;
         mousePoint={x:e.clientX,y:e.clientY};
-        if(distanceToNo(e.clientX,e.clientY)<78)evade(e,false);
-      },{passive:true});
-      area.addEventListener("pointerleave",function(){
+        if(distanceToNo(e.clientX,e.clientY)<165)evade(e);
+      },{passive:true,capture:true});
+      window.addEventListener("pointerleave",function(){
         mousePoint=null;
-        scheduleReturn(300);
+        if(escaped)scheduleReturn(500);
       },{passive:true});
-      area.addEventListener("pointerdown",function(e){
-        if(e.target===yesBtn || yesBtn.contains(e.target))return;
-        if(distanceToNo(e.clientX,e.clientY)<135)evade(e,true);
-      },{passive:true});
-      area.addEventListener("touchstart",function(e){
-        if(e.target===yesBtn || yesBtn.contains(e.target))return;
+      window.addEventListener("blur",function(){
+        mousePoint=null;
+        if(escaped)scheduleReturn(600);
+      });
+      // A touch has no pre-hover state: escape immediately on touch-down,
+      // including taps over the visual No (whose pointer-events are disabled).
+      window.addEventListener("pointerdown",function(e){
+        if(question.classList.contains("hidden"))return;
+        if(e.target===yesBtn||yesBtn.contains(e.target))return;
+        if(distanceToNo(e.clientX,e.clientY)<195)evade(e);
+      },{passive:true,capture:true});
+      window.addEventListener("touchstart",function(e){
+        if(question.classList.contains("hidden"))return;
+        if(e.target===yesBtn||yesBtn.contains(e.target))return;
         var t=e.touches[0];
-        if(t && distanceToNo(t.clientX,t.clientY)<135)evade(t,true);
-      },{passive:true});
+        if(t&&distanceToNo(t.clientX,t.clientY)<195)evade(t);
+      },{passive:true,capture:true});
       // Ambient hearts have fixed, bounded DOM counts: no timers or memory growth.
       var heartField = document.getElementById("heartField");
       var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -333,6 +397,7 @@
         setTimeout(function(){confetti.textContent="";},2700);
       }
       yesBtn.addEventListener("click",function(){
+        restoreNo();
         question.classList.add("hidden");result.classList.add("active");result.setAttribute("aria-hidden","false");
         question.setAttribute("aria-hidden","true");celebrate();document.getElementById("result-title").setAttribute("tabindex","-1");document.getElementById("result-title").focus({preventScroll:true});
         window.scrollTo({top:0,behavior:"smooth"});
@@ -346,7 +411,7 @@
       againBtn.addEventListener("click",function(){
         result.classList.remove("active");result.setAttribute("aria-hidden","true");question.classList.remove("hidden");question.setAttribute("aria-hidden","false");
         reveal.classList.remove("visible");surpriseBtn.setAttribute("aria-expanded","false");surpriseBtn.textContent="One more little secret ✨";
-        clearTimeout(returnTimer);mousePoint=null;restoreNo();attempts=0;tease.textContent="Psst… I think we both know the answer. ♡";
+        mousePoint=null;restoreNo();attempts=0;tease.textContent="Psst… I think we both know the answer. ♡";
         yesBtn.focus({preventScroll:true});window.scrollTo({top:0,behavior:"smooth"});
       });
     }());
