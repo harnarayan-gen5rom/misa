@@ -242,6 +242,64 @@
     }
     @media(prefers-reduced-motion:reduce){.music-bars i{animation:none!important;transform:none;}}
 
+
+    /* Portrait-led layout — preserve the existing romantic interaction */
+    .misa-main{width:100%;min-width:0;display:flex;align-items:center;justify-content:center;}
+    .story-grid{width:min(1070px,100%);display:grid;grid-template-columns:minmax(0,345px) minmax(0,1fr);align-items:center;gap:clamp(18px,2.7vw,30px);}
+    .story-column{min-width:0;width:100%;}
+    .story-column>.card{width:100%;max-width:none;}
+    .photo-feature{min-width:0;overflow:hidden;border-radius:30px;padding:14px;text-align:left;align-self:center;box-shadow:0 26px 73px rgba(139,68,117,.14),inset 0 1px 0 #fff;}
+    .photo-frame{position:relative;overflow:hidden;border-radius:23px;aspect-ratio:4/5;background:#edd1dd;box-shadow:0 12px 30px rgba(140,74,110,.12);}
+    .photo-frame img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 38%;filter:none;}
+    .photo-sticker{position:absolute;left:13px;bottom:12px;border:1px solid rgba(255,255,255,.90);border-radius:999px;background:rgba(255,247,251,.78);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);padding:9px 13px;color:#8b4c70;font-size:.73rem;font-weight:700;letter-spacing:.005em;box-shadow:0 4px 15px rgba(87,49,79,.10);}
+    .photo-caption{padding:15px 8px 10px;}
+    .photo-eyebrow{font-size:.61rem;color:#ac6085;font-weight:700;letter-spacing:.19em;margin:0 0 7px;}
+    .photo-heading{font-family:"Playfair Display",Georgia,serif!important;color:#4d3050;letter-spacing:-.025em;font-size:clamp(1.55rem,2.4vw,1.88rem);font-weight:500;line-height:1.28;padding:0;margin:0!important;}
+    .photo-copy{font-size:.81rem;line-height:1.72;color:#81637a;margin:8px 0 0;}
+    .misa-main .story-column>.card{animation:appear .65s cubic-bezier(.16,1,.3,1) both;}
+    .foot{padding-bottom:55px;}
+    @media(min-width:1200px){.story-grid{gap:30px;}.photo-feature{transform:rotate(-1deg);}.story-column{transform:translateY(-2px);}}
+    @media(min-width:780px) and (max-width:1030px){
+      .story-grid{grid-template-columns:minmax(0,33%) minmax(0,1fr);gap:16px;}
+      .story-column>.card{padding-left:clamp(19px,3.2vw,35px);padding-right:clamp(19px,3.2vw,35px);}
+      .story-column h1{font-size:clamp(2.5rem,5vw,3.8rem);}
+      .photo-caption{padding:12px 5px 7px;}
+    }
+    @media(max-width:779px){
+      .misa-main{padding-top:14px;}
+      .story-grid{width:min(620px,100%);grid-template-columns:minmax(0,1fr);gap:14px;align-items:stretch;}
+      .photo-feature{display:grid;grid-template-columns:clamp(105px,27vw,144px) minmax(0,1fr);align-items:center;gap:15px;padding:11px;border-radius:23px;}
+      .photo-frame{aspect-ratio:4/4.3;border-radius:17px;}
+      .photo-frame img{object-position:50% 32%;}
+      .photo-sticker{left:7px;bottom:7px;padding:5px 7px;font-size:.54rem;letter-spacing:-.02em;}
+      .photo-caption{padding:5px 5px 5px 0;}
+      .photo-heading{font-size:clamp(1.29rem,4.1vw,1.73rem);line-height:1.22;}
+      .photo-copy{font-size:clamp(.72rem,2.15vw,.84rem);line-height:1.52;margin-top:7px;}
+      .photo-eyebrow{font-size:.57rem;letter-spacing:.13em;margin-bottom:6px;}
+      .story-column>.card{border-radius:27px;}
+      .foot{padding-bottom:57px;}
+    }
+    @media(max-width:390px){
+      .story-grid{gap:11px;}
+      .photo-feature{grid-template-columns:104px minmax(0,1fr);gap:11px;padding:9px;}
+      .photo-frame{border-radius:15px;}
+      .photo-sticker{font-size:.48rem;padding:5px 6px;}
+      .photo-heading{font-size:1.21rem;}
+      .photo-copy{font-size:.72rem;line-height:1.45;margin-top:5px;}
+      .photo-eyebrow{font-size:.51rem;}
+      .story-column>.card{border-radius:24px;}
+    }
+    @media(max-width:330px){
+      .photo-feature{grid-template-columns:92px minmax(0,1fr);gap:9px;}
+      .photo-heading{font-size:1.1rem;}
+      .photo-copy{font-size:.67rem;}
+      .photo-sticker{display:none;}
+    }
+    @media(max-height:530px) and (orientation:landscape) and (min-width:780px){
+      .misa-main{align-items:flex-start;}
+      .photo-feature{max-width:310px;justify-self:end;}
+    }
+
   </style>
 </head>
 <body>
@@ -254,7 +312,20 @@
       <div class="brand"><span class="brandmark">♡</span> FOR MISA</div>
       <div class="nav-note"><span class="status-dot"></span> A little love letter</div>
     </header>
-    <main>
+    <main class="misa-main">
+      <div class="story-grid">
+        <aside class="card photo-feature" aria-label="A favourite photograph of Misa">
+          <div class="photo-frame">
+            <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_2xpmwMYXxZGKfds4TZFoW64cBQ0/6f0e582a-5619-4686-a3e8-5db9b018a868.jpg" alt="A cherished portrait of Misa" width="1320" height="996" decoding="async" fetchpriority="high" />
+            <span class="photo-sticker" aria-hidden="true">her quiet magic ♡</span>
+          </div>
+          <div class="photo-caption">
+            <p class="photo-eyebrow">JUST FOR YOU ♡</p>
+            <h2 class="photo-heading">My favourite view.</h2>
+            <p class="photo-copy">Somehow, every little moment becomes sweeter with you.</p>
+          </div>
+        </aside>
+        <div class="story-column">
       <section id="question" class="card" aria-labelledby="question-title">
         <div class="sparkle" aria-hidden="true">♡</div>
         <p class="eyebrow">ONE TINY QUESTION, JUST FOR YOU</p>
@@ -285,6 +356,8 @@
         <p class="signature">For Misa, with all my heart ♡</p>
         <button id="againBtn" class="again" type="button">Experience the magic again ↺</button>
       </section>
+        </div>
+      </div>
     </main>
     <footer class="foot">A LITTLE WEBSITE. AN ENDLESS AMOUNT OF LOVE <span class="mini-heart">♥</span></footer>
   </div>
@@ -601,7 +674,7 @@
         restoreNo();
         question.classList.add("hidden");question.inert=true;result.classList.add("active");result.inert=false;result.setAttribute("aria-hidden","false");
         question.setAttribute("aria-hidden","true");celebrate();document.getElementById("result-title").setAttribute("tabindex","-1");document.getElementById("result-title").focus({preventScroll:true});
-        window.scrollTo({top:0,behavior:"smooth"});
+        window.scrollTo({top:0,behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
       });
       surpriseBtn.addEventListener("click",function(){
         var open=!reveal.classList.contains("visible");
