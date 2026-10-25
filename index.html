@@ -102,12 +102,48 @@
     }
     @media (max-height:700px) { main {padding:18px 0 12px;} .card {padding-top:26px;padding-bottom:20px;} .sparkle {margin-bottom:13px;} .desc {margin-top:12px;} .choices {height:128px;margin-top:14px;} }
     @media (prefers-reduced-motion:reduce) { *,*:before,*:after {animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important;} }
+
+    /* Misa 2.0 • silky glass, floating hearts, playful impossible No */
+    body { background:#f8ddeb; }
+    .background { background:linear-gradient(135deg,#fff3e4 0%,#f8cde2 38%,#d9c9ff 74%,#ffe1ec 100%); }
+    .orb { filter:blur(17px); opacity:.8; }
+    .heart-field { position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;contain:layout paint; }
+    .heart-particle { position:absolute;bottom:-55px;display:block;line-height:1;will-change:transform;user-select:none;opacity:.42;animation:riseHeart var(--duration,13s) linear infinite;animation-delay:var(--delay,0s);font-size:var(--size,18px);color:var(--color,#e47daa);text-shadow:0 0 18px rgba(228,115,165,.26); }
+    @keyframes riseHeart { 0% {transform:translate3d(0,0,0) rotate(-20deg) scale(.68);opacity:0;} 9%{opacity:.5;} 84%{opacity:.42;} 100%{transform:translate3d(var(--drift,35px),-115vh,0) rotate(32deg) scale(1.22);opacity:0;} }
+    .card { box-shadow:0 35px 100px rgba(142,67,124,.15),inset 0 1px 0 rgba(255,255,255,.85); background:linear-gradient(145deg,rgba(255,255,255,.72),rgba(255,255,255,.3)); }
+    .card:after {content:"";position:absolute;pointer-events:none;inset:1px;border-radius:inherit;border:1px solid rgba(255,255,255,.42); }
+    .brandmark {box-shadow:0 6px 26px rgba(197,103,143,.24),inset 0 2px 0 rgba(255,255,255,.78);}
+    .sparkle {box-shadow:0 12px 40px rgba(206,113,156,.3),inset 0 2px 4px #fff;}
+    .nav-note {font-weight:500;}
+    .choices {width:min(405px,100%);height:235px;margin-top:24px;}
+    .choice {width:43%;min-width:0;min-height:55px;display:flex;align-items:center;justify-content:center;top:22px;border-radius:17px;}
+    #yesBtn {left:4%;z-index:2;touch-action:manipulation;transition:transform .18s,box-shadow .18s,background .18s;}
+    #noBtn {left:55%;top:22px;z-index:1;pointer-events:none!important;cursor:default;user-select:none;-webkit-user-select:none;touch-action:none;transition:left .11s cubic-bezier(.2,.9,.25,1),top .11s cubic-bezier(.2,.9,.25,1),transform .11s ease;box-shadow:0 9px 26px rgba(166,109,142,.19);}
+    #noBtn.dodge {transform:rotate(var(--wiggle,6deg)) scale(1.025);}
+    .tease {font-weight:600;color:#a65c84;bottom:3px;letter-spacing:.005em;}
+    h1 em,h2 em { background:linear-gradient(125deg,#d9548c,#b96fc4);color:transparent;-webkit-background-clip:text;background-clip:text; }
+    .poem {background:linear-gradient(135deg,rgba(255,255,255,.53),rgba(255,255,255,.23)); border-color:rgba(255,255,255,.85); box-shadow:inset 0 1px 0 #fff,0 10px 30px #bd7ca618; padding:25px 22px 28px;}
+    .poem-intro {font:700 .61rem "DM Sans",sans-serif!important;letter-spacing:.17em;text-transform:uppercase;color:#b96a93;margin:0 0 19px!important;}
+    .poem .poem-lines {font-size:clamp(.98rem,2.7vw,1.18rem);line-height:2.05;color:#734661;overflow-wrap:break-word;font-style:italic;}
+    .surprise {background:linear-gradient(135deg,#a65383,#c85d95);box-shadow:0 11px 30px rgba(167,81,123,.33);}
+    .surprise:hover {background:linear-gradient(135deg,#92416e,#b6538a);}
+    @media(max-width:600px){
+      .choices{height:220px;width:100%;}
+      .choice{min-height:54px;font-size:.9rem;}
+      #noBtn{top:22px;left:55%;}
+      .poem {padding:22px 16px;}
+      .poem .poem-lines {font-size:clamp(.95rem,3.45vw,1.13rem);line-height:1.9;}
+      .heart-particle {text-shadow:none;}
+    }
+    @media (max-height:700px){.choices{height:195px;margin-top:14px;}}
+    @media (prefers-reduced-motion:reduce){.heart-particle{animation:none;display:none;}#noBtn{transition:none;}}
+
   </style>
 </head>
 <body>
   <div class="background" aria-hidden="true"><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div><div class="orb d"></div></div>
   <div class="noise" aria-hidden="true"></div>
-  <div class="floating-heart h1" aria-hidden="true">♡</div><div class="floating-heart h2" aria-hidden="true">✧</div><div class="floating-heart h3" aria-hidden="true">♡</div><div class="floating-heart h4" aria-hidden="true">✦</div>
+  <div id="heartField" class="heart-field" aria-hidden="true"></div>
   <div id="confetti" aria-hidden="true"></div>
   <div class="shell">
     <header class="nav">
@@ -119,11 +155,11 @@
         <div class="sparkle" aria-hidden="true">♡</div>
         <p class="eyebrow">ONE TINY QUESTION, JUST FOR YOU</p>
         <h1 id="question-title">Misa, do you<br /><em>love me?</em></h1>
-        <p class="desc">Before you answer, just know that you make my ordinary days feel a little more magical.</p>
+        <p class="desc">Every little moment with you feels like the universe wrote it just for us.</p>
         <div class="choices" id="choices">
           <button id="yesBtn" class="choice" type="button">Yes, always ♡</button>
-          <button id="noBtn" class="choice" type="button" aria-label="No, playful moving button">No 🙈</button>
-          <div id="tease" class="tease" role="status" aria-live="polite">Psst… follow your heart.</div>
+          <span id="noBtn" class="choice" aria-hidden="true">No 🙈</span>
+          <div id="tease" class="tease" role="status" aria-live="polite">Psst… I think we both know the answer. ♡</div>
         </div>
         <p class="card-foot">Made with butterflies, blushes & a little mischief ✨</p>
       </section>
@@ -133,8 +169,10 @@
         <h2 id="result-title">You said yes.<br /><em>My heart knew.</em></h2>
         <p class="subline">And if I could write you a thousand love letters,<br />they'd all begin with your name.</p>
         <div class="poem">
-          <p>You are the calm in all my noise,<br />the softest light in ordinary days.<br />If love is made of little moments,<br />I want a million more your way.</p>
-          <p>Through every season, every story,<br />whatever this life takes us through—<br />in every world, in every lifetime,<br />my heart would still choose you.</p>
+          <p class="poem-intro">a little something from my heart to yours</p>
+          <p class="poem-lines">Teri do ankhon men dikhate hai mujhe dono jahaan<br />
+          In hi men kho gaya dil mera kaho dhundhu kahaan<br />
+          Chaand ghatata ho ghate apani mohabbat na ho kam</p>
         </div>
         <button id="surpriseBtn" class="surprise" type="button" aria-expanded="false">One more little secret ✨</button>
         <div id="reveal" class="reveal" role="status">
@@ -161,42 +199,76 @@
       var confetti = document.getElementById("confetti");
       var attempts = 0;
       var lastMove = 0;
-      var hints = ["Nice try, sweetheart 😉", "Oops, that button is shy! 💕", "Not today, princess ✨", "It has places to be 🏃", "Hmm… try the pink one ♡", "The universe has spoken 💗"];
-      function moveNo(evt) {
-        var now = Date.now();
-        if (now - lastMove < 115) return;
-        lastMove = now;
-        attempts++;
-        var w = area.clientWidth, h = area.clientHeight;
-        var bw = noBtn.offsetWidth, bh = noBtn.offsetHeight;
-        var maxX = Math.max(0,w - bw), maxY = Math.max(0,h - bh - 25);
-        var yesRect = yesBtn.getBoundingClientRect(), areaRect = area.getBoundingClientRect();
-        var yesX = yesRect.left - areaRect.left, yesY = yesRect.top - areaRect.top;
-        var pointerX = evt && evt.clientX ? evt.clientX - areaRect.left : -500;
-        var pointerY = evt && evt.clientY ? evt.clientY - areaRect.top : -500;
-        var x = maxX, y = maxY;
-        for (var i=0;i<35;i++) {
-          var tx = Math.random()*maxX, ty = Math.random()*maxY;
-          var overlapsYes = tx < yesX + yesRect.width + 10 && tx+bw > yesX-10 && ty < yesY + yesRect.height + 8 && ty+bh > yesY-8;
-          var nearPointer = Math.hypot(tx+bw/2-pointerX,ty+bh/2-pointerY)<95;
-          if (!overlapsYes && !nearPointer) {x=tx;y=ty;break;}
+      var hints = ["Nice try, sweetheart 😉", "Nope! Too quick for you 💕", "That button is shy 🙈", "Love wins this round ♡", "Almost... but not quite ✨", "The pink one is waiting 💗"];
+      // No is a visual joke, not an actionable button. Because it cannot receive
+      // pointer events or keyboard focus, there is no race where it can be clicked.
+      // Its position reacts to proximity on desktop and attempted taps on phones.
+      function evade(evt, immediate) {
+        var now = performance.now();
+        if(!immediate && now - lastMove < 85)return;
+        lastMove = now; attempts++;
+        var ar = area.getBoundingClientRect();
+        var nr = noBtn.getBoundingClientRect();
+        var yr = yesBtn.getBoundingClientRect();
+        var bw = nr.width, bh = nr.height;
+        var maxX = Math.max(6, ar.width-bw-6), maxY = Math.max(8,ar.height-bh-32);
+        var px = evt && typeof evt.clientX === "number" ? evt.clientX-ar.left : ar.width/2;
+        var py = evt && typeof evt.clientY === "number" ? evt.clientY-ar.top : ar.height/2;
+        var oldX = nr.left-ar.left, oldY = nr.top-ar.top;
+        var yesX = yr.left-ar.left, yesY = yr.top-ar.top;
+        var best = {x:Math.min(maxX,oldX),y:Math.min(maxY,oldY),score:-Infinity};
+        // Pick an unobstructed position maximally away from the actual finger/cursor.
+        for(var i=0;i<85;i++){
+          var x=6+Math.random()*(maxX-6), y=8+Math.random()*(maxY-8);
+          var hitsYes=x<yesX+yr.width+8 && x+bw>yesX-8 && y<yesY+yr.height+8 && y+bh>yesY-8;
+          if(hitsYes)continue;
+          var pointerDist=Math.hypot((x+bw/2)-px,(y+bh/2)-py);
+          var travelDist=Math.hypot(x-oldX,y-oldY);
+          var score=pointerDist*1.4 + Math.min(travelDist,180)*.6 + Math.random()*12;
+          if(score>best.score)best={x:x,y:y,score:score};
         }
-        noBtn.style.left = Math.round(x)+"px";
-        noBtn.style.top = Math.round(y)+"px";
-        noBtn.style.setProperty("--wiggle", (Math.random()>.5?"-":"")+(3+Math.random()*8)+"deg");
+        noBtn.style.left=best.x.toFixed(1)+"px";
+        noBtn.style.top=best.y.toFixed(1)+"px";
+        noBtn.style.setProperty("--wiggle",((attempts%2)?-1:1)*(3+Math.random()*7)+"deg");
         noBtn.classList.add("dodge");
-        tease.textContent = hints[(attempts-1)%hints.length];
+        tease.textContent=hints[(attempts-1)%hints.length];
       }
-      noBtn.addEventListener("pointerenter",function(e){if(e.pointerType==="mouse"||e.pointerType==="pen")moveNo(e);});
+      function distanceToNo(x,y){
+        var r=noBtn.getBoundingClientRect();
+        return Math.hypot(Math.max(r.left-x,0,x-r.right),Math.max(r.top-y,0,y-r.bottom));
+      }
       area.addEventListener("pointermove",function(e){
         if(e.pointerType==="touch")return;
-        var r=noBtn.getBoundingClientRect(), dx=Math.max(r.left-e.clientX,0,e.clientX-r.right),dy=Math.max(r.top-e.clientY,0,e.clientY-r.bottom);
-        if(Math.hypot(dx,dy)<52)moveNo(e);
+        if(distanceToNo(e.clientX,e.clientY)<115)evade(e,false);
       },{passive:true});
-      noBtn.addEventListener("pointerdown",function(e){e.preventDefault();moveNo(e);});
-      noBtn.addEventListener("click",function(e){e.preventDefault();moveNo(e);});
-      noBtn.addEventListener("focus",function(e){moveNo(e);});
-      noBtn.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();moveNo(e);}});
+      area.addEventListener("pointerdown",function(e){
+        if(e.target===yesBtn || yesBtn.contains(e.target))return;
+        if(distanceToNo(e.clientX,e.clientY)<135)evade(e,true);
+      },{passive:true});
+      area.addEventListener("touchstart",function(e){
+        if(e.target===yesBtn || yesBtn.contains(e.target))return;
+        var t=e.touches[0];
+        if(t && distanceToNo(t.clientX,t.clientY)<135)evade(t,true);
+      },{passive:true});
+      // Ambient hearts have fixed, bounded DOM counts: no timers or memory growth.
+      var heartField = document.getElementById("heartField");
+      var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if(!reducedMotion){
+        var totalHearts = window.innerWidth < 650 ? 15 : 24;
+        var palette = ["#df83af","#d7a1e8","#e897b6","#f5a4c4","#c48fd7"];
+        for(var h=0;h<totalHearts;h++){
+          var heart=document.createElement("span");
+          heart.className="heart-particle";
+          heart.textContent=(h%5===0)?"♥":"♡";
+          heart.style.left=(2+Math.random()*96)+"%";
+          heart.style.setProperty("--size",(12+Math.random()*16).toFixed(0)+"px");
+          heart.style.setProperty("--duration",(10+Math.random()*10).toFixed(1)+"s");
+          heart.style.setProperty("--delay",(-Math.random()*19).toFixed(1)+"s");
+          heart.style.setProperty("--drift",(Math.random()*170-85).toFixed(0)+"px");
+          heart.style.setProperty("--color",palette[h%palette.length]);
+          heartField.appendChild(heart);
+        }
+      }
       function celebrate() {
         confetti.textContent="";
         if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
@@ -227,7 +299,7 @@
       againBtn.addEventListener("click",function(){
         result.classList.remove("active");result.setAttribute("aria-hidden","true");question.classList.remove("hidden");question.setAttribute("aria-hidden","false");
         reveal.classList.remove("visible");surpriseBtn.setAttribute("aria-expanded","false");surpriseBtn.textContent="One more little secret ✨";
-        noBtn.style.left="53%";noBtn.style.top="25px";noBtn.classList.remove("dodge");attempts=0;tease.textContent="Psst… follow your heart.";
+        noBtn.style.left="55%";noBtn.style.top="22px";noBtn.classList.remove("dodge");attempts=0;tease.textContent="Psst… I think we both know the answer. ♡";
         yesBtn.focus({preventScroll:true});window.scrollTo({top:0,behavior:"smooth"});
       });
     }());
