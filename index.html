@@ -52,7 +52,8 @@
   #yesBtn{left:0;width:48%;border:0;background:#a74671;color:white;box-shadow:0 10px 27px rgba(176,77,124,.2);cursor:pointer;transition:transform .2s ease,background .2s ease,box-shadow .2s ease;}
   #yesBtn:hover{background:#95375f;transform:translateY(-2px);box-shadow:0 15px 31px rgba(176,77,124,.23);}
   #noBtn{left:53%;width:46%;border:1px solid rgba(177,108,143,.30);background:rgba(255,255,255,.68);color:#996985;pointer-events:none!important;cursor:default;transition:none!important;}
-  #noBtn.escaped{position:fixed!important;z-index:80!important;pointer-events:none!important;transition:none!important;box-shadow:0 12px 32px rgba(140,70,105,.18);}
+  #noBtn.repelling{position:fixed!important;left:0!important;top:0!important;right:auto!important;width:var(--repel-width,170px)!important;z-index:80!important;pointer-events:none!important;touch-action:none!important;transition:none!important;will-change:transform;backface-visibility:hidden;box-shadow:0 12px 32px rgba(140,70,105,.13);}
+  #noBtn[hidden]{display:none!important;}
   #tease{position:absolute;top:73px;left:0;right:0;max-width:420px;color:#ad8096;font-size:.73rem;font-weight:500;line-height:1.45;}
   .photo-side{min-width:0;height:100%;display:flex;align-items:center;justify-content:center;position:relative;padding:10px 3px 13px;}
   .photo-side::before{content:"";position:absolute;width:90%;height:73%;top:12%;left:6%;background:radial-gradient(ellipse,rgba(243,177,200,.27),rgba(212,190,242,.13) 53%,transparent 72%);filter:blur(37px);pointer-events:none;}
@@ -266,88 +267,188 @@
       field.appendChild(h);
     }
   }
-  var attempts=0,lastEscape=0,returnTimer=null,pointer=null,escaped=false,hiddenFrame=null;
-  var hints=["Nice try, sweetheart ♡","Not so fast 🙈","There is only one answer 💗","I think you know which one 😉","The pink one is waiting ♡"];
+  // Continuous repulsive-magnet motion, not random teleports.
+  // The visual "No" is always pointer-events:none, so taps cannot select it.
+  var hints=["Nice try, sweetheart ♡","Like opposite magnets 🙈","Our hearts know the answer 💗","Can't catch this one 😉","The pink one is waiting ♡"];
+  var attempts=0, hintAt=0, animationId=null, lastFrame=0;
+  var px=0,py=0,vx=0,vy=0,bw=0,bh=54,ready=false;
+  var contact={x:0,y:0,inside:false,touch:false};
+  var touchId=null,lastTouchTick=0,activeTouch=false;
+  function clamp(n,min,max){return Math.max(min,Math.min(max,n));}
   function home(){
-    return {left:area.getBoundingClientRect().left+area.clientWidth*.53,top:area.getBoundingClientRect().top+3};
+    var r=area.getBoundingClientRect();
+    return {x:r.left+area.clientWidth*.53,y:r.top+3};
   }
-  function distance(x,y){
-    var r=no.getBoundingClientRect();
-    return Math.hypot(Math.max(r.left-x,0,x-r.right),Math.max(r.top-y,0,y-r.bottom));
+  function viewport(){
+    return {w:window.innerWidth,h:window.innerHeight};
+  }
+  function position(){
+    no.style.transform="translate3d("+px.toFixed(2)+"px,"+py.toFixed(2)+"px,0)";
+  }
+  function dimensions(){
+    var r=area.getBoundingClientRect();
+    bw=Math.max(54,r.width*.46);
+    bh=window.innerWidth<=740?50:54;
+    no.style.setProperty("--repel-width",bw.toFixed(2)+"px");
+    var v=viewport();
+    return {maxX:Math.max(10,v.w-bw-10),maxY:Math.max(10,v.h-bh-10)};
   }
   function resetNo(){
-    clearTimeout(returnTimer);returnTimer=null;
-    if(hiddenFrame!==null){cancelAnimationFrame(hiddenFrame);hiddenFrame=null;}
-    no.style.visibility="hidden";
-    if(no.parentElement!==area)area.insertBefore(no,tease);
-    no.classList.remove("escaped");
-    no.style.left="";no.style.top="";no.style.width="";no.style.transform="";
-    escaped=false;
-    hiddenFrame=requestAnimationFrame(function(){no.style.visibility="visible";hiddenFrame=null;});
-  }
-  function queueHome(time){
-    clearTimeout(returnTimer);
-    returnTimer=setTimeout(function(){
-      if(question.hidden)return;
-      var place=home();
-      if(pointer && Math.hypot(pointer.x-place.left-45,pointer.y-place.top-25)<150){
-        queueHome(550);return;
-      }
-      resetNo();
-    },time);
-  }
-  function escapeNo(point){
-    if(question.hidden)return;
-    var now=performance.now();
-    if(now-lastEscape<85)return;
-    lastEscape=now;attempts++;
-    if(hiddenFrame!==null){cancelAnimationFrame(hiddenFrame);hiddenFrame=null;}
-    clearTimeout(returnTimer);
-    var r=no.getBoundingClientRect(),bw=r.width,bh=r.height;
-    var cx=point&&Number.isFinite(point.clientX)?point.clientX:innerWidth*.5;
-    var cy=point&&Number.isFinite(point.clientY)?point.clientY:innerHeight*.5;
-    var vv=window.visualViewport;
-    var ox=vv?vv.offsetLeft:0,oy=vv?vv.offsetTop:0;
-    var w=vv?vv.width:innerWidth,hh=vv?vv.height:innerHeight;
-    var minX=ox+12,minY=oy+12,maxX=Math.max(minX,ox+w-bw-12),maxY=Math.max(minY,oy+hh-bh-12);
-    var yesRect=yes.getBoundingClientRect(),best=null;
-    for(var i=0;i<85;i++){
-      var x=minX+Math.random()*Math.max(0,maxX-minX);
-      var y=minY+Math.random()*Math.max(0,maxY-minY);
-      if(x<yesRect.right+12 && x+bw>yesRect.left-12 && y<yesRect.bottom+12 && y+bh>yesRect.top-12)continue;
-      var d=Math.hypot(x+bw*.5-cx,y+bh*.5-cy);
-      var travel=Math.hypot(x+bw*.5-r.left-bw*.5,y+bh*.5-r.top-bh*.5);
-      var score=d*3+Math.min(360,travel)*.5;
-      if(!best||score>best.score)best={x:x,y:y,score:score};
+    if(animationId!==null){cancelAnimationFrame(animationId);animationId=null;}
+    lastFrame=0;vx=0;vy=0;
+    var v=dimensions(),h=home();
+    px=clamp(h.x,10,v.maxX);py=clamp(h.y,10,v.maxY);
+    if(!ready){
+      // Move into a viewport-level layer once, with no flash or layout jump.
+      no.style.width=bw+"px";
+      document.body.appendChild(no);
+      no.classList.add("repelling");
+      ready=true;
     }
-    if(!best)return;
-    no.style.visibility="hidden";
-    if(!escaped){document.body.appendChild(no);no.classList.add("escaped");escaped=true;}
-    no.style.width=bw+"px";
-    no.style.left=best.x+"px";
-    no.style.top=best.y+"px";
-    no.style.transform=attempts%2?"rotate(-7deg)":"rotate(7deg)";
-    tease.textContent=hints[(attempts-1)%hints.length];
-    hiddenFrame=requestAnimationFrame(function(){no.style.visibility="visible";hiddenFrame=null;});
-    queueHome(2200);
+    position();
+  }
+  function distance(x,y){
+    if(!ready)return Infinity;
+    var dx=x-clamp(x,px,px+bw);
+    var dy=y-clamp(y,py,py+bh);
+    return Math.hypot(dx,dy);
+  }
+  function keepMoving(){
+    if(animationId===null && !question.hidden){
+      lastFrame=0;
+      animationId=requestAnimationFrame(animateNo);
+    }
+  }
+  function track(e,isTouch){
+    if(question.hidden || !ready)return;
+    if(!Number.isFinite(e.clientX)||!Number.isFinite(e.clientY))return;
+    contact.x=e.clientX;contact.y=e.clientY;contact.inside=true;
+    contact.touch=!!isTouch;
+    var range=isTouch?240:320;
+    if(distance(contact.x,contact.y)<range){
+      if(performance.now()-hintAt>850){
+        attempts++;
+        tease.textContent=hints[(attempts-1)%hints.length];
+        hintAt=performance.now();
+      }
+    }
+    keepMoving();
+  }
+  function animateNo(time){
+    animationId=null;
+    if(question.hidden)return;
+    var dt=lastFrame?Math.min(1.8,Math.max(.6,(time-lastFrame)/16.667)):1;
+    lastFrame=time;
+    var v=viewport(),maxX=Math.max(10,v.w-bw-10),maxY=Math.max(10,v.h-bh-10);
+    var h=home(),homeX=clamp(h.x,10,maxX),homeY=clamp(h.y,10,maxY);
+    var cx=px+bw/2,cy=py+bh/2;
+    var near=false;
+    if(contact.inside){
+      var edgeDistance=distance(contact.x,contact.y);
+      var range=contact.touch?240:320;
+      near=edgeDistance<range;
+      if(near){
+        var dx=cx-contact.x,dy=cy-contact.y;
+        var magnitude=Math.hypot(dx,dy);
+        if(magnitude<2){
+          dx=vx||((cx<v.w/2)?1:-1);
+          dy=vy||((cy<v.h/2)?1:-1);
+          magnitude=Math.max(1,Math.hypot(dx,dy));
+        }
+        dx/=magnitude;dy/=magnitude;
+        // Redirect along the edge when the magnet has no horizontal/vertical room.
+        var roomX=(dx<0?px-10:maxX-px);
+        var roomY=(dy<0?py-10:maxY-py);
+        if(roomX<85){
+          dx*=.18;
+          dy+=(dy===0?(cy<v.h/2?1:-1):Math.sign(dy))*.8;
+        }
+        if(roomY<75){
+          dy*=.18;
+          dx+=(dx===0?(cx<v.w/2?1:-1):Math.sign(dx))*.8;
+        }
+        magnitude=Math.max(.01,Math.hypot(dx,dy));dx/=magnitude;dy/=magnitude;
+        var closeness=clamp(1-edgeDistance/range,0,1);
+        var push=(4.5+27*Math.pow(closeness,1.6))*dt;
+        vx+=dx*push;vy+=dy*push;
+      }
+    }
+    if(!near){
+      // Elastic spring home: no instant position reset.
+      vx+=(homeX-px)*.020*dt;
+      vy+=(homeY-py)*.020*dt;
+    }
+    // Keep away from Yes without blocking its click target visually.
+    var yesR=yes.getBoundingClientRect();
+    var nextX=px+vx*dt,nextY=py+vy*dt;
+    if(nextX<yesR.right+6&&nextX+bw>yesR.left-6&&nextY<yesR.bottom+6&&nextY+bh>yesR.top-6){
+      if(px>=yesR.right-3){vx+=8*dt;}
+      else if(px+bw<=yesR.left+3){vx-=8*dt;}
+      else{vy+=(cy<yesR.top+yesR.height/2?-10:10)*dt;}
+    }
+    var friction=Math.pow(near?.83:.79,dt);
+    vx*=friction;vy*=friction;
+    var speed=Math.hypot(vx,vy),maxSpeed=contact.touch?34:29;
+    if(speed>maxSpeed){vx*=maxSpeed/speed;vy*=maxSpeed/speed;}
+    px+=vx*dt;py+=vy*dt;
+    if(px<10){px=10;if(vx<0)vx=0;}
+    if(px>maxX){px=maxX;if(vx>0)vx=0;}
+    if(py<10){py=10;if(vy<0)vy=0;}
+    if(py>maxY){py=maxY;if(vy>0)vy=0;}
+    position();
+    // Sleep when settled; pointer movement wakes the simulation again.
+    var moved=Math.hypot(px-homeX,py-homeY);
+    if(near||moved>.5||Math.hypot(vx,vy)>.13||activeTouch){
+      animationId=requestAnimationFrame(animateNo);
+    }else{
+      px=homeX;py=homeY;vx=vy=0;position();lastFrame=0;
+    }
   }
   window.addEventListener("pointermove",function(e){
-    if(e.pointerType==="touch"||question.hidden)return;
-    pointer={x:e.clientX,y:e.clientY};
-    if(distance(e.clientX,e.clientY)<150)escapeNo(e);
-  },{passive:true,capture:true});
+    if(e.pointerType==="touch"){
+      if(activeTouch&&e.pointerId===touchId)track(e,true);
+      return;
+    }
+    track(e,false);
+  },{capture:true,passive:true});
   window.addEventListener("pointerdown",function(e){
     if(question.hidden||e.target===yes||yes.contains(e.target))return;
-    if(distance(e.clientX,e.clientY)<175)escapeNo(e);
-  },{passive:true,capture:true});
+    if(e.pointerType==="touch"){
+      activeTouch=true;touchId=e.pointerId;lastTouchTick=performance.now();
+    }
+    track(e,e.pointerType==="touch");
+  },{capture:true,passive:true});
+  window.addEventListener("pointerup",function(e){
+    if(e.pointerType==="touch"&&e.pointerId===touchId){
+      activeTouch=false;touchId=null;
+      // Preserve a short magnetic field while the finger lifts.
+      keepMoving();
+    }
+  },{capture:true,passive:true});
+  window.addEventListener("pointercancel",function(e){
+    if(e.pointerId===touchId){activeTouch=false;touchId=null;contact.inside=false;keepMoving();}
+  },{capture:true,passive:true});
+  // iOS Safari sometimes dispatches touch events without usable pointer events.
   window.addEventListener("touchstart",function(e){
     if(question.hidden||e.target===yes||yes.contains(e.target))return;
-    var t=e.touches[0];
-    if(t&&distance(t.clientX,t.clientY)<175)escapeNo(t);
-  },{passive:true,capture:true});
-  window.addEventListener("pointerleave",function(){pointer=null;if(escaped)queueHome(600);},{passive:true});
-  window.addEventListener("resize",function(){pointer=null;resetNo();},{passive:true});
-  window.addEventListener("orientationchange",function(){pointer=null;resetNo();},{passive:true});
+    var t=e.touches[0];if(!t)return;
+    if(performance.now()-lastTouchTick<70)return;
+    activeTouch=true;track(t,true);
+  },{capture:true,passive:true});
+  window.addEventListener("touchmove",function(e){
+    var t=e.touches[0];if(t&&activeTouch)track(t,true);
+  },{capture:true,passive:true});
+  window.addEventListener("touchend",function(){
+    activeTouch=false;contact.inside=false;keepMoving();
+  },{capture:true,passive:true});
+  window.addEventListener("pointerleave",function(e){
+    if(e.pointerType!=="touch"){contact.inside=false;keepMoving();}
+  },{capture:true,passive:true});
+  window.addEventListener("blur",function(){contact.inside=false;activeTouch=false;keepMoving();});
+  window.addEventListener("resize",function(){contact.inside=false;resetNo();},{passive:true});
+  window.addEventListener("orientationchange",function(){contact.inside=false;resetNo();},{passive:true});
+  if(window.visualViewport)window.visualViewport.addEventListener("resize",function(){contact.inside=false;resetNo();},{passive:true});
+  resetNo();
   function burst(){
     if(reduced)return;
     confetti.textContent="";
@@ -365,7 +466,7 @@
     setTimeout(function(){confetti.textContent="";},2500);
   }
   yes.addEventListener("click",function(){
-    resetNo();question.hidden=true;question.inert=true;
+    resetNo();question.hidden=true;question.inert=true;no.hidden=true;contact.inside=false;
     result.classList.add("active");result.inert=false;result.setAttribute("aria-hidden","false");
     document.getElementById("result-title").setAttribute("tabindex","-1");
     document.getElementById("result-title").focus({preventScroll:true});
@@ -383,7 +484,7 @@
     result.classList.remove("active");result.inert=true;result.setAttribute("aria-hidden","true");
     question.hidden=false;question.inert=false;
     secret.classList.remove("show");surprise.setAttribute("aria-expanded","false");surprise.textContent="One more little secret ♡";
-    resetNo();attempts=0;tease.textContent="The pink one is waiting 💗";
+    no.hidden=false;contact.inside=false;resetNo();attempts=0;tease.textContent="The pink one is waiting 💗";
     yes.focus({preventScroll:true});
     if(innerWidth<741)window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
   });
