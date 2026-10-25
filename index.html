@@ -138,6 +138,25 @@
     @media (max-height:700px){.choices{height:195px;margin-top:14px;}}
     @media (prefers-reduced-motion:reduce){.heart-particle{animation:none;display:none;}#noBtn{transition:none;}}
 
+
+    /* Layout refinement: full italic punctuation and tidy side-by-side resting buttons */
+    h1 {line-height:1.28;letter-spacing:-.035em;overflow:visible;padding:.04em .06em .09em;}
+    h1 em {display:inline-block;white-space:nowrap;line-height:1.29;padding:.015em .19em .14em;margin:0 -.10em -.13em;vertical-align:baseline;overflow:visible;}
+    .choices {height:166px;margin-top:24px;}
+    .choice {top:20px;}
+    #yesBtn {top:20px;left:4%;width:43%;}
+    #noBtn {top:20px;left:55%;width:43%;}
+    .tease {bottom:5px;}
+    @media(max-width:600px) {
+      h1 {font-size:clamp(2.23rem,9.9vw,3.45rem);line-height:1.3;letter-spacing:-.027em;padding:.06em 0 .12em;}
+      h1 em {padding-right:.18em;padding-bottom:.14em;margin-right:-.08em;}
+      .choices{height:163px;width:100%;margin-top:19px;}
+      .choice{top:20px;font-size:.89rem;min-height:54px;}
+      #yesBtn{top:20px;left:3%;width:44%;}
+      #noBtn{top:20px;left:54%;width:44%;}
+    }
+    @media(max-height:700px) {.choices{height:142px;margin-top:12px;}}
+
   </style>
 </head>
 <body>
@@ -199,6 +218,28 @@
       var confetti = document.getElementById("confetti");
       var attempts = 0;
       var lastMove = 0;
+      var returnTimer = null;
+      var mousePoint = null;
+      var homeTop = 20;
+      function restoreNo(){
+        noBtn.style.left = window.innerWidth < 600 ? "54%" : "55%";
+        noBtn.style.top = homeTop+"px";
+        noBtn.classList.remove("dodge");
+      }
+      function scheduleReturn(delay){
+        clearTimeout(returnTimer);
+        returnTimer=setTimeout(function(){
+          // Never snap under the user's pointer; return as soon as the area is clear.
+          var r=area.getBoundingClientRect();
+          var hx=r.left + r.width*(window.innerWidth < 600 ? .54 : .55) + noBtn.offsetWidth/2;
+          var hy=r.top+homeTop+noBtn.offsetHeight/2;
+          if(mousePoint && Math.hypot(mousePoint.x-hx,mousePoint.y-hy)<115){
+            scheduleReturn(550);
+            return;
+          }
+          restoreNo();
+        },delay);
+      }
       var hints = ["Nice try, sweetheart 😉", "Nope! Too quick for you 💕", "That button is shy 🙈", "Love wins this round ♡", "Almost... but not quite ✨", "The pink one is waiting 💗"];
       // No is a visual joke, not an actionable button. Because it cannot receive
       // pointer events or keyboard focus, there is no race where it can be clicked.
@@ -211,7 +252,7 @@
         var nr = noBtn.getBoundingClientRect();
         var yr = yesBtn.getBoundingClientRect();
         var bw = nr.width, bh = nr.height;
-        var maxX = Math.max(6, ar.width-bw-6), maxY = Math.max(8,ar.height-bh-32);
+        var maxX = Math.max(6, ar.width-bw-6), maxY = Math.max(8,ar.height-bh-45);
         var px = evt && typeof evt.clientX === "number" ? evt.clientX-ar.left : ar.width/2;
         var py = evt && typeof evt.clientY === "number" ? evt.clientY-ar.top : ar.height/2;
         var oldX = nr.left-ar.left, oldY = nr.top-ar.top;
@@ -232,6 +273,7 @@
         noBtn.style.setProperty("--wiggle",((attempts%2)?-1:1)*(3+Math.random()*7)+"deg");
         noBtn.classList.add("dodge");
         tease.textContent=hints[(attempts-1)%hints.length];
+        scheduleReturn(1150);
       }
       function distanceToNo(x,y){
         var r=noBtn.getBoundingClientRect();
@@ -239,7 +281,12 @@
       }
       area.addEventListener("pointermove",function(e){
         if(e.pointerType==="touch")return;
-        if(distanceToNo(e.clientX,e.clientY)<115)evade(e,false);
+        mousePoint={x:e.clientX,y:e.clientY};
+        if(distanceToNo(e.clientX,e.clientY)<78)evade(e,false);
+      },{passive:true});
+      area.addEventListener("pointerleave",function(){
+        mousePoint=null;
+        scheduleReturn(300);
       },{passive:true});
       area.addEventListener("pointerdown",function(e){
         if(e.target===yesBtn || yesBtn.contains(e.target))return;
@@ -299,7 +346,7 @@
       againBtn.addEventListener("click",function(){
         result.classList.remove("active");result.setAttribute("aria-hidden","true");question.classList.remove("hidden");question.setAttribute("aria-hidden","false");
         reveal.classList.remove("visible");surpriseBtn.setAttribute("aria-expanded","false");surpriseBtn.textContent="One more little secret ✨";
-        noBtn.style.left="55%";noBtn.style.top="22px";noBtn.classList.remove("dodge");attempts=0;tease.textContent="Psst… I think we both know the answer. ♡";
+        clearTimeout(returnTimer);mousePoint=null;restoreNo();attempts=0;tease.textContent="Psst… I think we both know the answer. ♡";
         yesBtn.focus({preventScroll:true});window.scrollTo({top:0,behavior:"smooth"});
       });
     }());
