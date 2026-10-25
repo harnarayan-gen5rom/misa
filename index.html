@@ -289,45 +289,65 @@
     <footer class="foot">A LITTLE WEBSITE. AN ENDLESS AMOUNT OF LOVE <span class="mini-heart">♥</span></footer>
   </div>
 
-  <audio id="bgMusic" src="https://d2ol7oe51mr4n9.cloudfront.net/user_2xpmwMYXxZGKfds4TZFoW64cBQ0/4e65558f-6a9a-4c40-b822-1b7f17d38620.mp3" loop preload="auto" playsinline aria-hidden="true"></audio>
-  <button id="musicToggle" class="music-toggle" type="button" aria-label="Play romantic background music" aria-pressed="false">
+  <audio id="bgMusic" src="https://d2ol7oe51mr4n9.cloudfront.net/user_2xpmwMYXxZGKfds4TZFoW64cBQ0/4e65558f-6a9a-4c40-b822-1b7f17d38620.mp3" loop autoplay preload="auto" playsinline aria-hidden="true"></audio>
+  <button id="musicToggle" class="music-toggle" type="button" aria-label="Autoplay music on. Tap to play if your browser blocked it." aria-pressed="false">
     <span class="music-symbol" aria-hidden="true">♫</span>
-    <span class="music-text" id="musicText">Play music</span>
+    <span class="music-text" id="musicText">Music ON ♡</span>
     <span class="music-bars" aria-hidden="true"><i></i><i></i><i></i></span>
   </button>
   <script>
     (function () {
       "use strict";
 
-      // User-supplied 15-second song. The audio element loops natively.
-      // Browsers may refuse unmuted autoplay, so retry from the first gesture.
+      // The user wants background music ON by default. Browsers may prohibit
+      // unmuted autoplay until a real user gesture; don't pretend to bypass that.
       var bgMusic=document.getElementById("bgMusic");
       var musicToggle=document.getElementById("musicToggle");
       var musicText=document.getElementById("musicText");
       var explicitlyPaused=false;
       var playbackRequest=null;
+      var autoplayBlocked=false;
+      bgMusic.autoplay=true;
+      bgMusic.loop=true;
+      bgMusic.defaultMuted=false;
+      bgMusic.muted=false;
       bgMusic.volume=.48;
       function showMusicState(){
         var playing=!bgMusic.paused && !bgMusic.ended;
         musicToggle.classList.toggle("is-playing",playing);
         musicToggle.setAttribute("aria-pressed",String(playing));
-        musicToggle.setAttribute("aria-label",playing?"Pause romantic background music":"Play romantic background music");
-        musicText.textContent=playing?"Pause music":"Play music";
+        musicToggle.setAttribute("aria-label",playing?"Pause romantic background music":explicitlyPaused?"Play romantic background music":"Enable music if autoplay was blocked");
+        musicText.textContent=playing?"Pause music":explicitlyPaused?"Play music":autoplayBlocked?"Tap for music":"Music ON ♡";
       }
       function startMusic(){
-        if(explicitlyPaused || !bgMusic.paused) return;
+        if(explicitlyPaused||!bgMusic.paused||playbackRequest) return;
         try{
-          var p=bgMusic.play();
-          if(p && typeof p.then==="function"){
-            playbackRequest=p;
-            p.then(showMusicState).catch(function(){showMusicState();}).finally(function(){if(playbackRequest===p)playbackRequest=null;});
-          }else{showMusicState();}
-        }catch(err){showMusicState();}
+          var attempt=bgMusic.play();
+          if(attempt&&typeof attempt.then==="function"){
+            playbackRequest=attempt;
+            attempt.then(function(){
+              autoplayBlocked=false;
+              showMusicState();
+            },function(){
+              autoplayBlocked=true;
+              showMusicState();
+            }).then(function(){
+              if(playbackRequest===attempt)playbackRequest=null;
+            });
+          }else{
+            autoplayBlocked=false;
+            showMusicState();
+          }
+        }catch(err){
+          autoplayBlocked=true;
+          showMusicState();
+        }
       }
       musicToggle.addEventListener("click",function(ev){
         ev.stopPropagation();
         if(bgMusic.paused){
           explicitlyPaused=false;
+          autoplayBlocked=false;
           startMusic();
         }else{
           explicitlyPaused=true;
@@ -335,24 +355,30 @@
           showMusicState();
         }
       });
-      bgMusic.addEventListener("play",showMusicState);
+      bgMusic.addEventListener("play",function(){autoplayBlocked=false;showMusicState();});
       bgMusic.addEventListener("pause",showMusicState);
       bgMusic.addEventListener("error",function(){
         musicText.textContent="Music unavailable";
         musicToggle.setAttribute("aria-label","Music could not be loaded");
       });
       function gestureStartMusic(ev){
-        if(explicitlyPaused || ev.target===musicToggle || musicToggle.contains(ev.target))return;
+        if(explicitlyPaused||ev.target===musicToggle||musicToggle.contains(ev.target))return;
         startMusic();
       }
+      // User gestures unlock sound on Safari, Chrome and mobile browsers.
       document.addEventListener("pointerdown",gestureStartMusic,{passive:true,capture:true});
       document.addEventListener("touchstart",gestureStartMusic,{passive:true,capture:true});
+      document.addEventListener("click",gestureStartMusic,{capture:true});
       document.addEventListener("keydown",function(ev){
-        if(ev.key==="Enter" || ev.key===" "){gestureStartMusic(ev);}
+        if(ev.key==="Enter"||ev.key===" ")gestureStartMusic(ev);
       },{capture:true});
-      // Autoplay is optional by browser policy; an ordinary tap makes it work.
-      if(document.readyState==="complete") startMusic();
-      else window.addEventListener("load",startMusic,{once:true});
+      window.addEventListener("pageshow",startMusic);
+      document.addEventListener("visibilitychange",function(){
+        if(!document.hidden)startMusic();
+      });
+      // Try immediately instead of waiting for all page resources to load.
+      startMusic();
+      showMusicState();
 
       var area = document.getElementById("choices");
       var noBtn = document.getElementById("noBtn");
