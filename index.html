@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f5cbdc" />
   <meta name="description" content="A tiny question and a whole lot of love, made just for Misa." />
   <meta property="og:title" content="For Misa, with all my love ♡" />
   <meta property="og:description" content="A little question, a big feeling." />
@@ -236,6 +235,7 @@
       var mousePoint = null;
       var escaped = false;
       var lastTouchEscape = 0;
+      var lastEscapeTime = 0;
       var viewportUpdate = null;
       var hints = [
         "Nice try, sweetheart 😉",
@@ -292,6 +292,11 @@
       }
       function evade(point) {
         if(question.classList.contains("hidden"))return;
+        // Prevent rapid flickering on high-refresh desktops, while keeping
+        // the decorative No permanently non-clickable.
+        var time=performance.now();
+        if(time-lastEscapeTime<75)return;
+        lastEscapeTime=time;
         clearReturn();
         if(revealFrame!==null)cancelAnimationFrame(revealFrame);
         revealFrame=null;
