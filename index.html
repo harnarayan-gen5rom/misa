@@ -243,63 +243,152 @@
     @media(prefers-reduced-motion:reduce){.music-bars i{animation:none!important;transform:none;}}
 
 
-    /* Portrait-led layout — preserve the existing romantic interaction */
-    .misa-main{width:100%;min-width:0;display:flex;align-items:center;justify-content:center;}
-    .story-grid{width:min(1070px,100%);display:grid;grid-template-columns:minmax(0,345px) minmax(0,1fr);align-items:center;gap:clamp(18px,2.7vw,30px);}
-    .story-column{min-width:0;width:100%;}
-    .story-column>.card{width:100%;max-width:none;}
-    .photo-feature{min-width:0;overflow:hidden;border-radius:30px;padding:14px;text-align:left;align-self:center;box-shadow:0 26px 73px rgba(139,68,117,.14),inset 0 1px 0 #fff;}
-    .photo-frame{position:relative;overflow:hidden;border-radius:23px;aspect-ratio:4/5;background:#edd1dd;box-shadow:0 12px 30px rgba(140,74,110,.12);}
-    .photo-frame img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 38%;filter:none;}
-    .photo-sticker{position:absolute;left:13px;bottom:12px;border:1px solid rgba(255,255,255,.90);border-radius:999px;background:rgba(255,247,251,.78);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);padding:9px 13px;color:#8b4c70;font-size:.73rem;font-weight:700;letter-spacing:.005em;box-shadow:0 4px 15px rgba(87,49,79,.10);}
-    .photo-caption{padding:15px 8px 10px;}
-    .photo-eyebrow{font-size:.61rem;color:#ac6085;font-weight:700;letter-spacing:.19em;margin:0 0 7px;}
-    .photo-heading{font-family:"Playfair Display",Georgia,serif!important;color:#4d3050;letter-spacing:-.025em;font-size:clamp(1.55rem,2.4vw,1.88rem);font-weight:500;line-height:1.28;padding:0;margin:0!important;}
-    .photo-copy{font-size:.81rem;line-height:1.72;color:#81637a;margin:8px 0 0;}
-    .misa-main .story-column>.card{animation:appear .65s cubic-bezier(.16,1,.3,1) both;}
-    .foot{padding-bottom:55px;}
-    @media(min-width:1200px){.story-grid{gap:30px;}.photo-feature{transform:rotate(-1deg);}.story-column{transform:translateY(-2px);}}
+    /* Heart-melt composition: a portrait + a connected, overlapping love letter */
+    .misa-main{width:100%;min-width:0;display:flex;align-items:center;justify-content:center;padding-top:24px;padding-bottom:30px;}
+    .story-grid{
+      width:min(1180px,100%);display:grid;grid-template-columns:minmax(0,40%) minmax(0,60%);
+      align-items:center;gap:0;position:relative;isolation:isolate;
+    }
+    .story-grid::before{
+      content:"";position:absolute;left:8%;top:9%;width:46%;height:86%;z-index:-1;
+      border-radius:50%;background:radial-gradient(circle,rgba(251,135,184,.23),rgba(192,155,239,.12) 49%,transparent 73%);
+      filter:blur(32px);pointer-events:none;
+    }
+    .photo-feature{
+      position:relative;z-index:1;min-width:0;width:min(450px,100%);justify-self:end;
+      border-radius:33px;padding:14px;text-align:left;overflow:visible;
+      transform:translateY(-23px) rotate(-2.1deg);
+      box-shadow:0 29px 78px rgba(140,64,108,.20),inset 0 1px 0 #fff;
+      transition:transform .55s cubic-bezier(.2,.8,.2,1);
+    }
+    .photo-feature::after{
+      content:"♡";position:absolute;left:-36px;top:-56px;pointer-events:none;
+      color:rgba(212,103,156,.50);font:normal 86px "Playfair Display",Georgia,serif;
+      transform:rotate(-19deg);text-shadow:0 10px 32px rgba(212,103,156,.12);
+    }
+    .photo-feature:hover{transform:translateY(-29px) rotate(-1deg);}
+    .photo-frame{
+      position:relative;overflow:hidden;border-radius:25px;aspect-ratio:4/4.5;
+      background:#eacbdc;box-shadow:0 15px 42px rgba(148,72,113,.17);
+    }
+    .photo-frame img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 34%;}
+    .photo-frame::after{
+      content:"";position:absolute;inset:56% 0 0;pointer-events:none;
+      background:linear-gradient(0deg,rgba(53,17,43,.25),transparent 84%);
+    }
+    .photo-sticker{
+      position:absolute;z-index:1;left:13px;bottom:14px;
+      border:1px solid rgba(255,255,255,.90);border-radius:999px;
+      background:rgba(255,247,251,.85);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+      padding:10px 13px;color:#865170;font-size:.72rem;font-weight:700;letter-spacing:.008em;
+      box-shadow:0 7px 22px rgba(85,41,75,.14);max-width:calc(100% - 26px);
+    }
+    .photo-caption{padding:17px 11px 12px;position:relative;}
+    .photo-eyebrow{font-size:.61rem;color:#aa5a84;font-weight:700;letter-spacing:.19em;margin:0 0 6px;}
+    .photo-heading{
+      font-family:"Playfair Display",Georgia,serif!important;
+      color:#4d3050;letter-spacing:-.025em;font-size:clamp(1.65rem,2.25vw,2rem);
+      font-weight:500;line-height:1.22;padding:0;margin:0!important;
+    }
+    .photo-copy{font-size:.84rem;line-height:1.72;color:#7e5f78;margin:8px 0 0;}
+    .story-column{
+      position:relative;z-index:2;min-width:0;width:calc(100% + 82px);
+      margin-left:-82px;transform:translateY(39px);
+    }
+    .story-column>.card{
+      width:100%;max-width:none;border-radius:34px;
+      background:linear-gradient(145deg,rgba(255,255,255,.85),rgba(255,248,253,.57) 56%,rgba(245,229,255,.50));
+      box-shadow:0 35px 90px rgba(125,64,112,.19),inset 0 1px 0 rgba(255,255,255,.95);
+      padding:clamp(29px,3.2vw,46px) clamp(24px,3.6vw,53px) 28px;
+      animation:appear .65s cubic-bezier(.16,1,.3,1) both;
+    }
+    .story-column>.card .sparkle{width:59px;height:59px;margin-bottom:18px;}
+    .story-column>.card h1{font-size:clamp(2.75rem,5.25vw,4.55rem);line-height:1.24;}
+    .story-column>.card .eyebrow{letter-spacing:.2em;}
+    .story-column>.card .desc{margin-top:16px;}
+    .love-whisper{
+      color:#a9628a;font:italic clamp(.91rem,1.35vw,1.07rem)/1.55 "Playfair Display",Georgia,serif;
+      margin:14px auto 0;max-width:460px;
+    }
+    .story-column .choices{height:151px;margin-top:16px;}
+    .story-column .tease{bottom:4px;}
+    .foot{padding-bottom:62px;}
+    @media(min-width:1250px){.story-grid{transform:translateX(8px);}}
     @media(min-width:780px) and (max-width:1030px){
-      .story-grid{grid-template-columns:minmax(0,33%) minmax(0,1fr);gap:16px;}
-      .story-column>.card{padding-left:clamp(19px,3.2vw,35px);padding-right:clamp(19px,3.2vw,35px);}
-      .story-column h1{font-size:clamp(2.5rem,5vw,3.8rem);}
-      .photo-caption{padding:12px 5px 7px;}
+      .story-grid{grid-template-columns:minmax(0,40%) minmax(0,60%);}
+      .story-column{width:calc(100% + 54px);margin-left:-54px;transform:translateY(20px);}
+      .story-column>.card{padding:30px 24px 25px;}
+      .story-column>.card h1{font-size:clamp(2.55rem,4.9vw,3.75rem);}
+      .story-column .choices{height:146px;}
+      .photo-feature{transform:translateY(-12px) rotate(-1.5deg);}
+      .photo-caption{padding:13px 7px 8px;}
+      .photo-heading{font-size:clamp(1.35rem,2.45vw,1.85rem);}
+      .photo-copy{font-size:.76rem;}
+      .love-whisper{font-size:.92rem;}
     }
     @media(max-width:779px){
-      .misa-main{padding-top:14px;}
-      .story-grid{width:min(620px,100%);grid-template-columns:minmax(0,1fr);gap:14px;align-items:stretch;}
-      .photo-feature{display:grid;grid-template-columns:clamp(105px,27vw,144px) minmax(0,1fr);align-items:center;gap:15px;padding:11px;border-radius:23px;}
-      .photo-frame{aspect-ratio:4/4.3;border-radius:17px;}
-      .photo-frame img{object-position:50% 32%;}
-      .photo-sticker{left:7px;bottom:7px;padding:5px 7px;font-size:.54rem;letter-spacing:-.02em;}
-      .photo-caption{padding:5px 5px 5px 0;}
-      .photo-heading{font-size:clamp(1.29rem,4.1vw,1.73rem);line-height:1.22;}
-      .photo-copy{font-size:clamp(.72rem,2.15vw,.84rem);line-height:1.52;margin-top:7px;}
-      .photo-eyebrow{font-size:.57rem;letter-spacing:.13em;margin-bottom:6px;}
-      .story-column>.card{border-radius:27px;}
-      .foot{padding-bottom:57px;}
-    }
-    @media(max-width:390px){
-      .story-grid{gap:11px;}
-      .photo-feature{grid-template-columns:104px minmax(0,1fr);gap:11px;padding:9px;}
-      .photo-frame{border-radius:15px;}
-      .photo-sticker{font-size:.48rem;padding:5px 6px;}
-      .photo-heading{font-size:1.21rem;}
-      .photo-copy{font-size:.72rem;line-height:1.45;margin-top:5px;}
-      .photo-eyebrow{font-size:.51rem;}
-      .story-column>.card{border-radius:24px;}
-    }
-    @media(max-width:330px){
-      .photo-feature{grid-template-columns:92px minmax(0,1fr);gap:9px;}
-      .photo-heading{font-size:1.1rem;}
-      .photo-copy{font-size:.67rem;}
+      .misa-main{padding:8px 0 12px;align-items:flex-start;}
+      .story-grid{width:min(620px,100%);grid-template-columns:minmax(0,1fr);gap:0;align-items:stretch;}
+      .story-grid::before{left:2%;top:0;width:96%;height:58%;}
+      .photo-feature{
+        justify-self:center;width:100%;max-width:620px;transform:none!important;
+        border-radius:27px;padding:11px;box-shadow:0 20px 55px rgba(140,64,108,.14);
+      }
+      .photo-feature::after{left:auto;right:6px;top:-27px;font-size:51px;}
+      .photo-frame{aspect-ratio:1.34;border-radius:21px;}
+      .photo-frame img{object-position:50% 36%;}
       .photo-sticker{display:none;}
+      .photo-caption{
+        position:absolute;z-index:2;left:23px;right:23px;bottom:23px;padding:13px 16px;
+        border-radius:19px;border:1px solid rgba(255,255,255,.85);
+        background:rgba(255,250,253,.87);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+        box-shadow:0 12px 36px rgba(68,34,65,.12);
+      }
+      .photo-heading{font-size:clamp(1.3rem,4.3vw,1.72rem);}
+      .photo-eyebrow{font-size:.53rem;letter-spacing:.16em;margin-bottom:4px;}
+      .photo-copy{font-size:.73rem;line-height:1.4;margin:5px 0 0;}
+      .story-column{width:100%;margin-left:0;transform:none;z-index:3;margin-top:-30px;}
+      .story-column>.card{
+        border-radius:28px;padding:29px 20px 24px;
+        box-shadow:0 23px 64px rgba(122,55,102,.16),inset 0 1px 0 #fff;
+      }
+      .story-column>.card h1{font-size:clamp(2.25rem,8.8vw,3.6rem);line-height:1.28;}
+      .story-column>.card .sparkle{width:54px;height:54px;margin-bottom:15px;}
+      .story-column>.card .eyebrow{font-size:.6rem;}
+      .story-column>.card .desc{font-size:.9rem;line-height:1.7;}
+      .love-whisper{font-size:.95rem;margin-top:12px;}
+      .story-column .choices{height:142px;margin-top:11px;}
+      .foot{padding-bottom:62px;}
+    }
+    @media(max-width:420px){
+      .photo-feature{padding:9px;border-radius:24px;}
+      .photo-frame{aspect-ratio:1.2;border-radius:19px;}
+      .photo-caption{left:18px;right:18px;bottom:18px;padding:11px 13px;}
+      .photo-heading{font-size:1.32rem;}
+      .photo-copy{font-size:.68rem;}
+      .story-column{margin-top:-23px;}
+      .story-column>.card{padding:27px 16px 21px;border-radius:25px;}
+      .story-column>.card h1{font-size:clamp(2.04rem,9.1vw,2.85rem);}
+      .story-column>.card .eyebrow{letter-spacing:.11em;}
+      .love-whisper{font-size:.9rem;}
+      .story-column .choices{height:136px;margin-top:8px;}
+      .story-column .choice{min-height:50px;font-size:.82rem;}
+    }
+    @media(max-width:340px){
+      .photo-caption{padding:9px 10px;}
+      .photo-heading{font-size:1.15rem;}
+      .photo-copy{display:none;}
+      .story-column>.card{padding-inline:13px;}
+      .story-column>.card h1{font-size:1.99rem;}
+      .story-column .choice{font-size:.76rem;}
     }
     @media(max-height:530px) and (orientation:landscape) and (min-width:780px){
       .misa-main{align-items:flex-start;}
-      .photo-feature{max-width:310px;justify-self:end;}
+      .story-grid{max-width:900px;}
+      .photo-feature{max-width:310px;transform:none!important;}
+      .story-column{transform:none;}
     }
-
+    @media(prefers-reduced-motion:reduce){.photo-feature{transition:none!important;transform:none!important;}}
   </style>
 </head>
 <body>
@@ -317,12 +406,12 @@
         <aside class="card photo-feature" aria-label="A favourite photograph of Misa">
           <div class="photo-frame">
             <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_2xpmwMYXxZGKfds4TZFoW64cBQ0/6f0e582a-5619-4686-a3e8-5db9b018a868.jpg" alt="A cherished portrait of Misa" width="1320" height="996" decoding="async" fetchpriority="high" />
-            <span class="photo-sticker" aria-hidden="true">her quiet magic ♡</span>
+            <span class="photo-sticker" aria-hidden="true">my favourite kind of magic ♡</span>
           </div>
           <div class="photo-caption">
-            <p class="photo-eyebrow">JUST FOR YOU ♡</p>
-            <h2 class="photo-heading">My favourite view.</h2>
-            <p class="photo-copy">Somehow, every little moment becomes sweeter with you.</p>
+            <p class="photo-eyebrow">FOR THE GIRL WHO FEELS LIKE HOME ♡</p>
+            <h2 class="photo-heading">The face my heart calls home.</h2>
+            <p class="photo-copy">If love had a face, it would look a little like this.</p>
           </div>
         </aside>
         <div class="story-column">
@@ -331,6 +420,7 @@
         <p class="eyebrow">ONE TINY QUESTION, JUST FOR YOU</p>
         <h1 id="question-title">Misa, do you<br /><em>love me?</em></h1>
         <p class="desc">Every little moment with you feels like the universe wrote it just for us.</p>
+        <p class="love-whisper">In every universe, I would still find you. ♡</p>
         <div class="choices" id="choices">
           <button id="yesBtn" class="choice" type="button">Yes, always ♡</button>
           <span id="noBtn" class="choice" aria-hidden="true">No 🙈</span>
